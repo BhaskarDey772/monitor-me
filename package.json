@@ -1,0 +1,29 @@
+{
+  "name": "monitor-me",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "ISC",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "check-types": "turbo run check-types",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "auth:generate": "turbo run auth:generate"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "typescript": "catalog:"
+  },
+  "packageManager": "pnpm@11.0.9",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.0.9",
+      "onFail": "download"
+    }
+  }
+}

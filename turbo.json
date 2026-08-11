@@ -1,0 +1,49 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "globalDependencies": [".env"],
+  "globalEnv": [
+    "NODE_ENV",
+    "PORT",
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "SERVER_URL",
+    "CLIENT_URL",
+    "VITE_SERVER_URL"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build", "db:generate"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "dependsOn": ["^build", "db:generate"],
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "check-types": {
+      "dependsOn": ["^build", "db:generate"]
+    },
+    "db:generate": {
+      "inputs": ["prisma/**"],
+      "outputs": ["src/generated/**"],
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false,
+      "interactive": true
+    },
+    "auth:generate": {
+      "cache": false,
+      "interactive": true
+    }
+  }
+}

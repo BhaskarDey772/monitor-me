@@ -1,0 +1,167 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  monitors      Monitor[]
+
+  mustChangePassword Boolean? @default(false)
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// --- application models -----------------------------------------------------
+// Everything above this line is owned by the Better Auth CLI
+// (`pnpm auth:generate`); keep app models below so regeneration is safe.
+
+model Monitor {
+  id     String @id @default(cuid(2))
+  name   String
+  /// Instruction describing what to look for on each run.
+  prompt String
+
+  /// "preset" uses `intervalSeconds`; "custom" uses `cronExpression`.
+  scheduleKind    String    @default("preset")
+  intervalSeconds Int?
+  cronExpression  String?
+  /// When the schedule becomes active. Nothing runs before this instant.
+  startAt         DateTime
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  urls MonitorUrl[]
+  runs MonitorRun[]
+
+  @@index([userId])
+  @@map("monitor")
+}
+
+/// One monitor watches many URLs. A child table rather than a delimited string,
+/// so each URL can be indexed and referenced by a run result.
+model MonitorUrl {
+  id       String @id @default(cuid(2))
+  url      String
+  /// Display order, matching the order entered in the form.
+  position Int    @default(0)
+
+  monitorId String
+  monitor   Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  results MonitorRunResult[]
+
+  @@unique([monitorId, url])
+  @@index([monitorId])
+  @@map("monitor_url")
+}
+
+/// One scheduled execution of a monitor across all of its URLs.
+model MonitorRun {
+  id         String    @id @default(cuid(2))
+  status     String    @default("pending")
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  /// Short human-readable outcome shown in the log list.
+  summary    String?
+
+  monitorId String
+  monitor   Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  results MonitorRunResult[]
+
+  @@index([monitorId, startedAt])
+  @@map("monitor_run")
+}
+
+/// Per-URL outcome within a run.
+model MonitorRunResult {
+  id         String  @id @default(cuid(2))
+  /// Denormalized so the log still reads correctly after a URL is removed.
+  url        String
+  status     String  @default("pending")
+  statusCode Int?
+  durationMs Int?
+  error      String?
+
+  runId String
+  run   MonitorRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  monitorUrlId String?
+  monitorUrl   MonitorUrl? @relation(fields: [monitorUrlId], references: [id], onDelete: SetNull)
+
+  @@index([runId])
+  @@index([monitorUrlId])
+  @@map("monitor_run_result")
+}

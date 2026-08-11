@@ -1,0 +1,43 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+build/
+generated/
+*.tsbuildinfo
+
+# turbo
+.turbo/
+
+# env — shared root env is secret
+.env
+.env.*
+!.env.example
+
+# database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/*.db*
+
+# logs / os
+*.log
+npm-debug.log*
+.DS_Store
+
+# editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# agent skill docs installed by `prisma init` — regenerable vendor content
+apps/api/.agents/
+apps/api/.windsurf/
+apps/api/.claude/
+apps/api/skills-lock.json
+
+# playwright mcp scratch output
+.playwright-mcp/

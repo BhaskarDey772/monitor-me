@@ -1,0 +1,41 @@
+{
+  "name": "api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "check-types": "tsc --noEmit",
+    "user:create": "tsx src/scripts/create-user.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "auth:generate": "npx auth@latest generate --config src/lib/auth.ts"
+  },
+  "dependencies": {
+    "@monitor-me/shared": "workspace:*",
+    "@prisma/adapter-better-sqlite3": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "better-auth": "^1.6.26",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "helmet": "^8.3.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.13.3",
+    "prisma": "^7.9.1",
+    "tsx": "^4.23.12",
+    "typescript": "catalog:"
+  }
+}

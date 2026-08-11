@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Only these packages may run install-time build scripts.
+allowBuilds:
+  "@prisma/engines": true
+  prisma: true
+  esbuild: true
+  better-sqlite3: true
+
+catalog:
+  typescript: ~6.0.3
