@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "target": "es2023",
-    "lib": ["ES2023"],
+    // DOM is here only for WHATWG APIs that exist in both runtimes (URL,
+    // URLSearchParams). This package must stay isomorphic — no window/document.
+    "lib": ["ES2023", "DOM"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "moduleDetection": "force",

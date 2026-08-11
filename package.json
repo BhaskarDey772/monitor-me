@@ -11,8 +11,11 @@
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
     "db:generate": "turbo run db:generate",
-    "db:migrate": "turbo run db:migrate",
-    "auth:generate": "turbo run auth:generate"
+    "db:migrate": "pnpm --filter api db:migrate",
+    "auth:generate": "pnpm --filter api auth:generate",
+    "db:deploy": "pnpm --filter api db:deploy",
+    "db:studio": "pnpm --filter api db:studio",
+    "user:create": "pnpm --filter api user:create"
   },
   "devDependencies": {
     "turbo": "latest",

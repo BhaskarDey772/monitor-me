@@ -95,6 +95,11 @@ model Monitor {
   /// When the schedule becomes active. Nothing runs before this instant.
   startAt         DateTime
 
+  /// ntfy topic alerts are published to. On ntfy.sh the topic name IS the
+  /// password — anyone who knows it can read and publish — so this is generated
+  /// server-side with real entropy and never derived from the monitor id.
+  ntfyTopic String @unique
+
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

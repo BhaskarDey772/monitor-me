@@ -3,6 +3,7 @@ import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { ScrollText, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AddMonitorDialog } from '@/components/add-monitor-dialog'
+import { NtfyQrDialog } from '@/components/ntfy-qr-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -64,7 +65,10 @@ function DashboardPage() {
                       Text nodes: React escapes them, so a hostile name or URL
                       cannot become markup. */}
                   <div className="min-w-0 space-y-1.5">
-                    <p className="truncate font-medium">{monitor.name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate font-medium">{monitor.name}</p>
+                      <NtfyQrDialog monitor={monitor} />
+                    </div>
 
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="secondary">{monitor.schedule.label}</Badge>

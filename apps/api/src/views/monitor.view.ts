@@ -11,6 +11,7 @@ import type {
   MonitorRunResult,
   MonitorUrl,
 } from "../generated/prisma/client.js";
+import { ntfyLinksFor } from "../lib/ntfy.js";
 
 /**
  * Allowlist serializers. `userId` and the join-table ids stay server-side, and
@@ -60,6 +61,9 @@ export function toMonitorDto(monitor: MonitorRow): MonitorDto {
     updatedAt: monitor.updatedAt.toISOString(),
     runCount: monitor._count.runs,
     lastRunAt: monitor.runs[0]?.startedAt.toISOString() ?? null,
+    // Links are built server-side so the ntfy host lives in one place (env) and
+    // the client never has to know the scheme rules.
+    ntfy: ntfyLinksFor(monitor.ntfyTopic, monitor.name),
   };
 }
 

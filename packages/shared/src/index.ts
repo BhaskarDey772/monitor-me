@@ -4,5 +4,6 @@ export * from "./schemas/monitor.js";
 export * from "./schemas/schedule.js";
 export * from "./types/api.js";
 export * from "./types/auth.js";
+export * from "./utils/ntfy.js";
 export * from "./utils/sanitize.js";
 export * from "./utils/validation.js";

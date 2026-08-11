@@ -14,6 +14,7 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedChangePasswordRouteImport } from './routes/_authed/change-password'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as SubscribeTopicRouteImport } from './routes/subscribe.$topic'
 import { Route as AuthedMonitorsMonitorIdLogRouteImport } from './routes/_authed/monitors.$monitorId.log'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,6 +41,11 @@ const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthedRoute,
 } as any)
+const SubscribeTopicRoute = SubscribeTopicRouteImport.update({
+  id: '/subscribe/$topic',
+  path: '/subscribe/$topic',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedMonitorsMonitorIdLogRoute =
   AuthedMonitorsMonitorIdLogRouteImport.update({
     id: '/monitors/$monitorId/log',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/change-password': typeof AuthedChangePasswordRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/subscribe/$topic': typeof SubscribeTopicRoute
   '/monitors/$monitorId/log': typeof AuthedMonitorsMonitorIdLogRoute
 }
 export interface FileRoutesByTo {
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/change-password': typeof AuthedChangePasswordRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/subscribe/$topic': typeof SubscribeTopicRoute
   '/monitors/$monitorId/log': typeof AuthedMonitorsMonitorIdLogRoute
 }
 export interface FileRoutesById {
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authed/change-password': typeof AuthedChangePasswordRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/subscribe/$topic': typeof SubscribeTopicRoute
   '/_authed/monitors/$monitorId/log': typeof AuthedMonitorsMonitorIdLogRoute
 }
 export interface FileRouteTypes {
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/change-password'
     | '/dashboard'
+    | '/subscribe/$topic'
     | '/monitors/$monitorId/log'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/change-password'
     | '/dashboard'
+    | '/subscribe/$topic'
     | '/monitors/$monitorId/log'
   id:
     | '__root__'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authed/change-password'
     | '/_authed/dashboard'
+    | '/subscribe/$topic'
     | '/_authed/monitors/$monitorId/log'
   fileRoutesById: FileRoutesById
 }
@@ -99,6 +111,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  SubscribeTopicRoute: typeof SubscribeTopicRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/subscribe/$topic': {
+      id: '/subscribe/$topic'
+      path: '/subscribe/$topic'
+      fullPath: '/subscribe/$topic'
+      preLoaderRoute: typeof SubscribeTopicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/monitors/$monitorId/log': {
       id: '/_authed/monitors/$monitorId/log'
       path: '/monitors/$monitorId/log'
@@ -167,6 +187,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
+  SubscribeTopicRoute: SubscribeTopicRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

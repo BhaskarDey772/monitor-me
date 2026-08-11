@@ -37,6 +37,9 @@ const envSchema = z
 
     SERVER_URL: originSchema.transform(toOrigin),
 
+    /** ntfy instance alerts are published to. Self-hosted URLs work too. */
+    NTFY_SERVER: originSchema.default("https://ntfy.sh").transform(toOrigin),
+
     /** Comma-separated browser origin allowlist for CORS + CSRF. */
     CLIENT_URL: z
       .string()

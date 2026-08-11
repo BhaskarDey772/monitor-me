@@ -1,4 +1,5 @@
 import type { CreateMonitorInput, UpdateMonitorInput } from "@monitor-me/shared";
+import { generateNtfyTopic } from "../lib/ntfy.js";
 import { prisma } from "../lib/prisma.js";
 
 /**
@@ -59,6 +60,9 @@ export function create(userId: string, input: CreateMonitorInput) {
       name: input.name,
       prompt: input.prompt,
       startAt: new Date(input.startAt),
+      // Generated here, never accepted from the request: the topic is the only
+      // thing protecting the alert stream.
+      ntfyTopic: generateNtfyTopic(),
       ...scheduleColumns(input),
       // Nested create keeps the monitor and its URLs in one implicit transaction:
       // a rejected URL cannot leave a monitor with no targets behind.

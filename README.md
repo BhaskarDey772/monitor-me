@@ -60,8 +60,15 @@ regardless of the working directory.
 | `pnpm db:migrate`                   | Create/apply a migration                          |
 | `pnpm db:generate`                  | Regenerate the Prisma client                      |
 | `pnpm auth:generate`                | Regenerate Better Auth's Prisma models            |
-| `pnpm --filter api user:create`     | Provision an account                              |
-| `pnpm --filter api db:studio`       | Prisma Studio                                     |
+| `pnpm user:create`                  | Provision an account                              |
+| `pnpm db:studio`                    | Prisma Studio                                     |
+
+Graph tasks (`build`, `dev`, `lint`, `check-types`, `db:generate`) run through
+turbo. The interactive one-offs — `db:migrate`, `auth:generate`, `db:studio`,
+`user:create` — delegate straight to the `api` workspace with `pnpm --filter`
+instead. Turbo refuses to run a task marked `interactive` unless its terminal UI
+is enabled, and it would otherwise fan the task out to `web` and `shared`, which
+have no such script.
 
 `pnpm auth:generate` **overwrites** `prisma/schema.prisma`. App models live below
 the `--- application models ---` marker; re-add them after regenerating if the CLI
@@ -106,6 +113,75 @@ by the same `isValidCronExpression` on both sides.
 Each list row has a **Log** button and a red delete icon. The log screen
 (`/monitors/$monitorId/log`) shows the monitor's prompt and every recorded run,
 newest first, with per-URL status, HTTP code and duration.
+
+### Alerts (ntfy)
+
+Every monitor gets its own ntfy topic, generated server-side. A small QR icon sits
+next to the monitor name; it opens a dialog with a QR code that subscribes a phone
+to that topic, plus the raw topic and copyable links.
+
+#### Why the QR is a two-hop link
+
+Scanning has to end up at `ntfy://<host>/<topic>`, but a QR cannot carry that
+directly, and cannot carry an https ntfy URL either. Both halves are dead ends:
+
+- **A camera won't launch `ntfy://`.** Phone camera apps only follow a small
+  allowlist of schemes — http, https, tel, mailto, geo, wifi. An unknown scheme is
+  surfaced as plain text, which is exactly the "it just copies the text and
+  doesn't redirect" symptom.
+- **An https ntfy link won't reach the app.** ntfy's docs: *"Android deep linking
+  of http/https links is very brittle and limited, which is why something like
+  `https://<host>/<topic>/subscribe` is not possible."* The maintainer did try
+  App Links and then removed them — *"Android is not allowing me to register
+  reg-ex patterns of URLs and the wildcard stuff seems incredibly buggy"*
+  ([ntfy#20](https://github.com/binwiederhier/ntfy/issues/20)).
+
+Navigating to a custom scheme **from inside a browser** does hand off to the OS. So:
+
+```
+QR  →  https://<app>/subscribe/<topic>?display=<name>     camera opens this
+        └─ immediately redirects to → ntfy://<host>/<topic>?display=<name>
+```
+
+`/subscribe/$topic` redirects straight through — no buttons, no choices. Scanning
+the code means "open the app", so the page only changes scheme. It is public and
+stateless (the scanning phone is not signed in) and reveals nothing the topic
+holder does not already have.
+
+Two browser policies constrain that page, neither of them fixable from inside it:
+
+- **An automatic scheme launch can be refused.** Chrome answers a scripted
+  navigation to `ntfy://` with *"Not allowed to launch … because a user gesture is
+  required"*. After a tap the same navigation is permitted (it then reports only
+  *"the scheme does not have a registered handler"* when the app is absent). So
+  the page's one line of text is itself the link — if the automatic hop was
+  blocked, the first tap completes it.
+- **The tab cannot close itself.** `window.close()` is attempted, but browsers
+  allow it only for script-opened windows: a tab the camera app opened refuses with
+  *"Scripts may close only the windows that were opened by them"*. Expect the tab
+  to remain in the background after ntfy takes focus.
+
+Links come from `buildNtfyLinks` in `packages/shared` (adding `secure=false`
+automatically when `NTFY_SERVER` is plain http), so the server and the QR never
+disagree. Set the instance with `NTFY_SERVER` in the root `.env`; it defaults to
+`https://ntfy.sh`.
+
+> **The QR must point at an address the phone can reach.** The first entry of
+> `CLIENT_URL` is baked into the QR, and `localhost` resolves to the phone itself.
+> For device testing, put your LAN IP first —
+> `CLIENT_URL=http://192.168.1.20:5173,http://localhost:5173` — and note the web
+> dev server runs with `vite --host` so it listens on the LAN.
+
+Two caveats worth knowing:
+
+- **Deep links are documented for the Android app.** On iOS, subscribe by pasting
+  the topic — the dialog exposes it with a copy button.
+- **The topic is the password.** ntfy's docs: *"Since there is no sign-up, the
+  topic is essentially a password, so pick something that's not easily
+  guessable."* Anyone who learns a topic can read its alerts and publish fake
+  ones, so topics are 24 characters from the CSPRNG (~143 bits), never derived
+  from the monitor id, name or user id, and never accepted from a request body.
+  For anything real, self-host ntfy with auth.
 
 > **No scheduler yet.** Nothing executes monitors, so `monitor_run` is empty and
 > start time and cycle have no runtime effect. The log screen falls back to

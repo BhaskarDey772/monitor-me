@@ -1,3 +1,5 @@
+import type { NtfyLinks } from "../utils/ntfy.js";
+
 /** Transport contract for every non-auth endpoint, consumed by the client fetcher. */
 
 export type ApiSuccess<T> = {
@@ -49,6 +51,11 @@ export type MonitorDto = {
   /** Counts for the list row; the full log lives behind its own endpoint. */
   runCount: number;
   lastRunAt: string | null;
+  /**
+   * Where alerts for this monitor are published, and how to subscribe. Typed from
+   * `NtfyLinks` rather than restated, so adding a link shape cannot drift.
+   */
+  ntfy: NtfyLinks;
 };
 
 export const RUN_STATUSES = ["pending", "success", "failure", "error"] as const;
