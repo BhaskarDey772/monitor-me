@@ -1,6 +1,7 @@
 import { buildNtfyLinks, isValidNtfyTopic, normalizeText } from '@monitor-me/shared'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { Button } from '@/components/ui/button'
 
 /**
  * Hand-off target for the subscribe QR code: changes scheme and gets out of the
@@ -54,8 +55,8 @@ function SubscribeHandoff() {
     // The text is the retry: Chrome refuses an automatic external-scheme launch
     // with "a user gesture is required", so when the redirect above is blocked
     // this same link works on first tap. One affordance, not a menu.
-    <a href={appLink} className="text-muted-foreground text-sm underline">
-      Opening ntfy… tap if nothing happens
-    </a>
+    <Button asChild variant="link">
+      <a href={appLink}>Opening ntfy… tap if nothing happens</a>
+    </Button>
   )
 }

@@ -1,4 +1,4 @@
-import { CHANGE_PASSWORD_PATH } from '@monitor-me/shared'
+import { SETTINGS_PATH } from '@monitor-me/shared'
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { getSession } from '@/lib/auth-client'
 
@@ -26,8 +26,8 @@ export const Route = createFileRoute('/_authed')({
     }
 
     // Accounts provisioned with a generated password must rotate it first.
-    if (data.user.mustChangePassword && location.pathname !== CHANGE_PASSWORD_PATH) {
-      throw redirect({ to: CHANGE_PASSWORD_PATH })
+    if (data.user.mustChangePassword && location.pathname !== SETTINGS_PATH) {
+      throw redirect({ to: SETTINGS_PATH })
     }
 
     return { session: data }

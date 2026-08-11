@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@base-ui/react": "^1.7.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@monitor-me/shared": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",

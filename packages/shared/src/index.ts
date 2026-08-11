@@ -2,6 +2,7 @@ export * from "./constants.js";
 export * from "./schemas/auth.js";
 export * from "./schemas/monitor.js";
 export * from "./schemas/schedule.js";
+export * from "./schemas/settings.js";
 export * from "./types/api.js";
 export * from "./types/auth.js";
 export * from "./utils/ntfy.js";

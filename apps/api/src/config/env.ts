@@ -40,6 +40,32 @@ const envSchema = z
     /** ntfy instance alerts are published to. Self-hosted URLs work too. */
     NTFY_SERVER: originSchema.default("https://ntfy.sh").transform(toOrigin),
 
+    /**
+     * 32-byte base64 key for encrypting stored secrets (AES-256-GCM). Separate
+     * from BETTER_AUTH_SECRET so session signing and data-at-rest encryption can
+     * be rotated independently. Generate with:
+     *   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+     */
+    ENCRYPTION_KEY: z
+      .string()
+      .refine(
+        (value) => {
+          try {
+            return Buffer.from(value, "base64").length === 32;
+          } catch {
+            return false;
+          }
+        },
+        { error: "ENCRYPTION_KEY must be 32 bytes, base64-encoded." },
+      ),
+
+    /**
+     * Server-wide OpenRouter fallback. Users may store their own key instead; it
+     * takes precedence. This value is never sent to a client.
+     */
+    OPENROUTER_API_KEY: z.string().trim().default(""),
+    OPENROUTER_MODEL: z.string().trim().default("openai/gpt-4o-mini"),
+
     /** Comma-separated browser origin allowlist for CORS + CSRF. */
     CLIENT_URL: z
       .string()

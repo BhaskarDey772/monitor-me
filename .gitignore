@@ -39,5 +39,6 @@ apps/api/.windsurf/
 apps/api/.claude/
 apps/api/skills-lock.json
 
-# playwright mcp scratch output
+# playwright mcp scratch output — screenshots land in the repo root
 .playwright-mcp/
+/*.png

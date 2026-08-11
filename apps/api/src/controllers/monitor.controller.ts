@@ -6,6 +6,7 @@ import type {
 import type { Request, Response } from "express";
 import { currentUser } from "../middleware/require-auth.js";
 import * as monitors from "../models/monitor.model.js";
+import * as settings from "../models/settings.model.js";
 import { HttpError } from "../utils/http-error.js";
 import { sendOk } from "../views/response.view.js";
 import {
@@ -23,10 +24,19 @@ import {
 
 const MAX_MONITORS_PER_USER = 50;
 
+/** Which ntfy topic the user's monitors currently report, per their settings. */
+async function activeChannel(userId: string) {
+  const row = await settings.findOrCreateForUser(userId);
+  return { sharedTopic: row.ntfyMode === "shared" ? row.ntfySharedTopic : null };
+}
+
 export async function index(req: Request, res: Response) {
   const user = currentUser(req);
-  const rows = await monitors.listByUser(user.id);
-  return sendOk(res, toMonitorDtoList(rows));
+  const [rows, channel] = await Promise.all([
+    monitors.listByUser(user.id),
+    activeChannel(user.id),
+  ]);
+  return sendOk(res, toMonitorDtoList(rows, channel));
 }
 
 export async function show(req: Request, res: Response) {
@@ -36,7 +46,7 @@ export async function show(req: Request, res: Response) {
   const row = await monitors.findOwned(id, user.id);
   if (!row) throw HttpError.notFound("Monitor not found.");
 
-  return sendOk(res, toMonitorDto(row));
+  return sendOk(res, toMonitorDto(row, await activeChannel(user.id)));
 }
 
 export async function store(req: Request, res: Response) {
@@ -50,7 +60,7 @@ export async function store(req: Request, res: Response) {
   }
 
   const row = await monitors.create(user.id, input);
-  return sendOk(res, toMonitorDto(row), 201);
+  return sendOk(res, toMonitorDto(row, await activeChannel(user.id)), 201);
 }
 
 export async function update(req: Request, res: Response) {
@@ -61,7 +71,7 @@ export async function update(req: Request, res: Response) {
   const row = await monitors.updateOwned(id, user.id, input);
   if (!row) throw HttpError.notFound("Monitor not found.");
 
-  return sendOk(res, toMonitorDto(row));
+  return sendOk(res, toMonitorDto(row, await activeChannel(user.id)));
 }
 
 export async function destroy(req: Request, res: Response) {
@@ -90,7 +100,7 @@ export async function runs(req: Request, res: Response) {
   const rows = await monitors.listRuns(monitor.id);
 
   const payload: MonitorLogDto = {
-    monitor: toMonitorDto(monitor),
+    monitor: toMonitorDto(monitor, await activeChannel(user.id)),
     runs: toMonitorRunDtoList(rows),
   };
 

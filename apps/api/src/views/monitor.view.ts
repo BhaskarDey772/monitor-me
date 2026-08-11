@@ -48,7 +48,17 @@ function toSchedule(monitor: Monitor): MonitorDto["schedule"] {
   };
 }
 
-export function toMonitorDto(monitor: MonitorRow): MonitorDto {
+/**
+ * In shared mode every monitor reports the user's one shared topic, so a single
+ * subscription covers all of them. The per-monitor topic stays in the row, so
+ * switching back restores the original channels rather than minting new ones.
+ */
+export type NtfyChannel = { sharedTopic: string | null };
+
+export function toMonitorDto(
+  monitor: MonitorRow,
+  channel: NtfyChannel = { sharedTopic: null },
+): MonitorDto {
   return {
     id: monitor.id,
     name: monitor.name,
@@ -63,12 +73,16 @@ export function toMonitorDto(monitor: MonitorRow): MonitorDto {
     lastRunAt: monitor.runs[0]?.startedAt.toISOString() ?? null,
     // Links are built server-side so the ntfy host lives in one place (env) and
     // the client never has to know the scheme rules.
-    ntfy: ntfyLinksFor(monitor.ntfyTopic, monitor.name),
+    ntfy: channel.sharedTopic
+      ? ntfyLinksFor(channel.sharedTopic, "monitor-me alerts")
+      : ntfyLinksFor(monitor.ntfyTopic, monitor.name),
   };
 }
 
-export const toMonitorDtoList = (monitors: MonitorRow[]): MonitorDto[] =>
-  monitors.map(toMonitorDto);
+export const toMonitorDtoList = (
+  monitors: MonitorRow[],
+  channel: NtfyChannel = { sharedTopic: null },
+): MonitorDto[] => monitors.map((monitor) => toMonitorDto(monitor, channel));
 
 function toRunResultDto(result: MonitorRunResult): MonitorRunResultDto {
   return {

@@ -23,6 +23,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   monitors      Monitor[]
+  settings      UserSettings?
 
   mustChangePassword Boolean? @default(false)
 
@@ -169,4 +170,30 @@ model MonitorRunResult {
   @@index([runId])
   @@index([monitorUrlId])
   @@map("monitor_run_result")
+}
+
+/// Per-user preferences. Kept out of the Better Auth `user` table so
+/// `pnpm auth:generate` cannot clobber them.
+model UserSettings {
+  id String @id @default(cuid(2))
+
+  /// "per_monitor" gives every monitor its own ntfy topic; "shared" routes all
+  /// alerts for this user to `ntfySharedTopic`.
+  ntfyMode        String @default("per_monitor")
+  /// Topic used in shared mode. Generated server-side like any other topic.
+  ntfySharedTopic String @unique
+
+  /// AES-256-GCM ciphertext of the user's own OpenRouter key, or null to use the
+  /// server default from the environment. Never returned to a client.
+  openRouterApiKey String?
+  /// null falls back to OPENROUTER_MODEL.
+  openRouterModel  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }

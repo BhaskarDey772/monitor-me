@@ -6,10 +6,10 @@ import {
   parseInput,
   type MonitorDto,
 } from '@monitor-me/shared'
-import { Plus, Trash2 } from 'lucide-react'
+import { PlusIcon, Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { FieldError } from '@/components/field-error'
+import { FieldError, isInvalid } from '@/components/field-error'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -20,15 +20,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { ApiError, api } from '@/lib/api'
 import { toDateTimeLocalValue } from '@/lib/datetime'
@@ -128,7 +141,7 @@ export function AddMonitorDialog({ onCreated }: { onCreated: () => Promise<void>
     >
       <DialogTrigger asChild>
         <Button>
-          <Plus className="size-4" />
+          <PlusIcon data-icon="inline-start" />
           Add monitor
         </Button>
       </DialogTrigger>
@@ -141,121 +154,137 @@ export function AddMonitorDialog({ onCreated }: { onCreated: () => Promise<void>
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" placeholder="Pricing page" required />
-            <FieldError messages={errors.name} />
-          </div>
+        <form onSubmit={handleSubmit} noValidate>
+          <FieldGroup>
+            <Field data-invalid={isInvalid(errors.name) || undefined}>
+              <FieldLabel htmlFor="name">Name</FieldLabel>
+              <Input
+                id="name"
+                name="name"
+                placeholder="Pricing page"
+                aria-invalid={isInvalid(errors.name) || undefined}
+                required
+              />
+              <FieldError messages={errors.name} />
+            </Field>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>URLs</Label>
+            <Field data-invalid={isInvalid(errors.urls) || undefined}>
+              <FieldLabel>URLs</FieldLabel>
+
+              {urls.map((url, index) => (
+                <InputGroup key={index}>
+                  <InputGroupInput
+                    value={url}
+                    onChange={(event) => updateUrl(index, event.target.value)}
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://example.com"
+                    aria-label={`URL ${index + 1}`}
+                    aria-invalid={isInvalid(errors.urls) || undefined}
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton
+                      size="icon-xs"
+                      onClick={() => removeUrlRow(index)}
+                      disabled={urls.length === 1}
+                      aria-label={`Remove URL ${index + 1}`}
+                    >
+                      <Trash2Icon />
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+              ))}
+
+              <FieldError messages={errors.urls} />
+
               <Button
                 type="button"
                 size="sm"
-                variant="ghost"
+                variant="outline"
+                className="self-start"
                 onClick={addUrlRow}
                 disabled={urls.length >= MAX_URLS_PER_MONITOR}
               >
-                <Plus className="size-4" />
+                <PlusIcon data-icon="inline-start" />
                 Add URL
               </Button>
-            </div>
+            </Field>
 
-            {urls.map((url, index) => (
-              <div key={index} className="flex gap-2">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field data-invalid={isInvalid(errors.intervalSeconds) || undefined}>
+                <FieldLabel htmlFor="cycle">Cycle</FieldLabel>
+                <Select value={cycle} onValueChange={setCycle}>
+                  <SelectTrigger id="cycle" className="w-full">
+                    <SelectValue placeholder="Choose a cycle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {SCHEDULE_PRESETS.map((preset) => (
+                        <SelectItem key={preset.value} value={String(preset.value)}>
+                          {preset.label}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={CUSTOM}>Custom…</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldError messages={errors.intervalSeconds} />
+              </Field>
+
+              <Field data-invalid={isInvalid(errors.startAt) || undefined}>
+                <FieldLabel htmlFor="startAt">Start time</FieldLabel>
                 <Input
-                  value={url}
-                  onChange={(event) => updateUrl(index, event.target.value)}
-                  type="url"
-                  inputMode="url"
-                  placeholder="https://example.com"
-                  aria-label={`URL ${index + 1}`}
+                  id="startAt"
+                  name="startAt"
+                  type="datetime-local"
+                  defaultValue={toDateTimeLocalValue(new Date())}
+                  aria-invalid={isInvalid(errors.startAt) || undefined}
+                  required
                 />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => removeUrlRow(index)}
-                  disabled={urls.length === 1}
-                  aria-label={`Remove URL ${index + 1}`}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
-            ))}
-            <FieldError messages={errors.urls} />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="cycle">Cycle</Label>
-              <Select value={cycle} onValueChange={setCycle}>
-                <SelectTrigger id="cycle" className="w-full">
-                  <SelectValue placeholder="Choose a cycle" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SCHEDULE_PRESETS.map((preset) => (
-                    <SelectItem key={preset.value} value={String(preset.value)}>
-                      {preset.label}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={CUSTOM}>Custom…</SelectItem>
-                </SelectContent>
-              </Select>
-              <FieldError messages={errors.intervalSeconds} />
+                <FieldError messages={errors.startAt} />
+              </Field>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="startAt">Start time</Label>
-              <Input
-                id="startAt"
-                name="startAt"
-                type="datetime-local"
-                defaultValue={toDateTimeLocalValue(new Date())}
+            {/* Revealed only for a custom cycle, so the two schedule kinds cannot
+                be filled in at the same time. */}
+            {isCustom ? (
+              <Field data-invalid={isInvalid(errors.cronExpression) || undefined}>
+                <FieldLabel htmlFor="cronExpression">Cron expression</FieldLabel>
+                <Input
+                  id="cronExpression"
+                  name="cronExpression"
+                  placeholder="*/15 * * * *"
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-invalid={isInvalid(errors.cronExpression) || undefined}
+                  required
+                />
+                <FieldDescription>
+                  Five fields: minute hour day-of-month month day-of-week.
+                </FieldDescription>
+                <FieldError messages={errors.cronExpression} />
+              </Field>
+            ) : null}
+
+            <Field data-invalid={isInvalid(errors.prompt) || undefined}>
+              <FieldLabel htmlFor="prompt">Prompt</FieldLabel>
+              <Textarea
+                id="prompt"
+                name="prompt"
+                rows={4}
+                placeholder="Tell me if the starting price changes or the page stops mentioning a free tier."
+                aria-invalid={isInvalid(errors.prompt) || undefined}
                 required
               />
-              <FieldError messages={errors.startAt} />
-            </div>
-          </div>
+              <FieldError messages={errors.prompt} />
+            </Field>
 
-          {/* Revealed only for a custom cycle, so the two schedule kinds cannot
-              be filled in at the same time. */}
-          {isCustom ? (
-            <div className="space-y-2">
-              <Label htmlFor="cronExpression">Cron expression</Label>
-              <Input
-                id="cronExpression"
-                name="cronExpression"
-                placeholder="*/15 * * * *"
-                autoComplete="off"
-                spellCheck={false}
-                required
-              />
-              <p className="text-muted-foreground text-xs">
-                Five fields: minute hour day-of-month month day-of-week.
-              </p>
-              <FieldError messages={errors.cronExpression} />
-            </div>
-          ) : null}
+            <FieldError messages={errors._} />
+          </FieldGroup>
 
-          <div className="space-y-2">
-            <Label htmlFor="prompt">Prompt</Label>
-            <Textarea
-              id="prompt"
-              name="prompt"
-              rows={4}
-              placeholder="Tell me if the starting price changes or the page stops mentioning a free tier."
-              required
-            />
-            <FieldError messages={errors.prompt} />
-          </div>
-
-          <FieldError messages={errors._} />
-
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button type="submit" disabled={pending}>
+              {pending ? <Spinner data-icon="inline-start" /> : null}
               {pending ? 'Adding…' : 'Add monitor'}
             </Button>
           </DialogFooter>

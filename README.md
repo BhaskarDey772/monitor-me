@@ -18,6 +18,7 @@ shared package both consume. SQLite via Prisma, sessions via Better Auth, one
 pnpm install
 cp .env.example .env            # then edit it (see below)
 npx auth@latest secret          # paste the result into BETTER_AUTH_SECRET
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"  # ENCRYPTION_KEY
 pnpm db:migrate                 # creates apps/api/prisma/dev.db
 pnpm dev                        # api on :4000, web on :5173
 ```
@@ -30,7 +31,7 @@ pnpm --filter api user:create -- --email you@example.com --name "You"
 ```
 
 Then open http://localhost:5173 and sign in. If the password was generated, the
-first sign-in lands on `/change-password` and nothing else works until it is
+first sign-in lands on `/settings` and nothing else works until it is
 rotated (see [Forced password rotation](#forced-password-rotation)).
 
 ### Shared environment
@@ -189,6 +190,58 @@ Two caveats worth knowing:
 > **Sample data**, so the layout is reviewable. Nothing fake is ever written to the
 > database. Delete that file and the fallback in the log route when a runner lands.
 
+## Settings
+
+`/settings` holds the account section and the password form:
+
+- **Name** is editable, validated by the shared `updateProfileSchema` and saved
+  with `PATCH /api/me`, which delegates to Better Auth's `updateUser` so its own
+  caches stay consistent. Only `name` is accepted — email needs a verification
+  flow, and `mustChangePassword` is `input: false`, so neither can be smuggled in
+  through the request body.
+- **Password** change lives here too, and doubles as the forced-rotation screen.
+- **Alerts** chooses between one shared ntfy channel for every monitor and a
+  separate channel per monitor. In shared mode each monitor reports the user's
+  shared topic, so one scan covers everything; per-monitor topics stay in the
+  database, so switching back restores existing subscriptions rather than minting
+  new ones.
+- **OpenRouter** sets the model (picked from the live catalogue — 400+ ids behind a
+  native `datalist`, and a hand-typed id is still accepted) and optionally the
+  user's own API key.
+
+### Storing the OpenRouter key
+
+The key must be replayed to OpenRouter verbatim, so it cannot be hashed. It is
+handled like this instead:
+
+| Concern | Measure |
+| ------- | ------- |
+| At rest | AES-256-GCM (`lib/crypto.ts`) under `ENCRYPTION_KEY`, which lives in the environment, not the database. Ciphertext is `v1:<iv>:<tag>:<data>`, versioned for rotation. |
+| Tampering | GCM authenticates: a modified row decrypts to `null` rather than to a corrupted token that would be sent to a third party. |
+| Exposure | Write-only. The API never returns it — not even to its owner — only `hasCustomKey` and the last four characters. The `SettingsDto` type has no field for it, so a serializer cannot leak it by accident. |
+| The server default | `OPENROUTER_API_KEY` is never sent to a browser, not even masked. A client can learn only that *some* key is configured. |
+| Caching | Every API response sets `Cache-Control: no-store, private`, so no proxy or browser retains one user's settings. |
+| Mass assignment | Zod strips unknown keys, so the key cannot be set through another endpoint. |
+| Abuse | Settings writes are rate limited separately (10 per 5 min in production). A new key is verified against `GET /api/v1/key` before storage, and without a limit that check would be a free oracle for testing stolen keys. |
+| Logs | Validation failures echo messages, never values, and the OpenRouter client swallows fetch errors rather than formatting the key into one. |
+| Fallback | No stored key, or one that fails to decrypt after an `ENCRYPTION_KEY` rotation, degrades to the environment default instead of erroring. |
+
+The field has two states. With no key stored it is an input, and the server's
+environment key is used by default. Once a key is saved the input is replaced by a
+masked rendering (`sk-or-••••••••••••wxyz`, built from the last four characters —
+the only part the client ever receives) with a red delete button beside it.
+Deleting clears the column and the input returns, so replacing a key is
+delete-then-paste and the server default takes over in between.
+
+Deliberate omission: there is no "reveal my key" button. A field that can
+re-display a secret is a field an XSS payload can read, and since the key is only
+ever used server-side, showing it back adds risk without adding capability.
+Replacing it is one paste; recovering it is a job for wherever it was issued.
+
+Every password field is a `PasswordInput` with an eye / eye-off reveal toggle. The
+toggle flips the input's `type` only — the value is never copied into another
+element — and it starts as `type="password"` so password managers behave normally.
+
 ## Auth
 
 Better Auth with email + password, sessions in the database, cookies signed with
@@ -214,9 +267,10 @@ an email, so it should buy nothing beyond the ability to replace itself.
 client-writable) whenever it generated the password. While the flag is set:
 
 - `POST /api/password` and `GET /api/me` are the only endpoints that work;
-  everything else answers `403 PASSWORD_CHANGE_REQUIRED`, enforced by
-  `requirePasswordChanged` middleware — not by the UI.
-- The client's `_authed` guard redirects to `/change-password`, and navigating
+  everything else — including `PATCH /api/me` — answers
+  `403 PASSWORD_CHANGE_REQUIRED`, enforced by `requirePasswordChanged`
+  middleware, not by the UI. The settings page disables the name field to match.
+- The client's `_authed` guard redirects to `/settings`, and navigating
   anywhere else bounces straight back.
 
 `POST /api/password` re-validates with the shared `changePasswordSchema`, delegates

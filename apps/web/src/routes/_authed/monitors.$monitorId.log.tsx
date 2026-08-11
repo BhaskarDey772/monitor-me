@@ -4,7 +4,7 @@ import {
   type RunStatus,
 } from '@monitor-me/shared'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeftIcon, HistoryIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,7 +14,22 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import { Item, ItemContent, ItemGroup, ItemTitle } from '@/components/ui/item'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { api } from '@/lib/api'
 import { formatDateTime, formatDuration } from '@/lib/datetime'
 import { dummyRuns } from '@/lib/dummy-runs'
@@ -25,13 +40,15 @@ export const Route = createFileRoute('/_authed/monitors/$monitorId/log')({
   component: MonitorLogPage,
 })
 
-const STATUS_VARIANT: Record<RunStatus, 'default' | 'secondary' | 'destructive' | 'outline'> =
-  {
-    success: 'default',
-    failure: 'destructive',
-    error: 'destructive',
-    pending: 'secondary',
-  }
+const STATUS_VARIANT: Record<
+  RunStatus,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
+  success: 'default',
+  failure: 'destructive',
+  error: 'destructive',
+  pending: 'secondary',
+}
 
 function StatusBadge({ status }: { status: RunStatus }) {
   return <Badge variant={STATUS_VARIANT[status]}>{status}</Badge>
@@ -46,11 +63,11 @@ function MonitorLogPage() {
   const runs = isSample ? dummyRuns(monitor) : recorded
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <Button asChild size="sm" variant="ghost" className="-ml-2">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <Button asChild size="sm" variant="ghost" className="-ml-2 self-start">
           <Link to="/dashboard">
-            <ArrowLeft className="size-4" />
+            <ArrowLeftIcon data-icon="inline-start" />
             Back to dashboard
           </Link>
         </Button>
@@ -89,59 +106,74 @@ function MonitorLogPage() {
         </CardHeader>
         <CardContent>
           {runs.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No runs recorded yet.
-            </p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <HistoryIcon />
+                </EmptyMedia>
+                <EmptyTitle>No runs yet</EmptyTitle>
+                <EmptyDescription>
+                  Runs will appear here once this monitor executes.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
-            <ul className="space-y-4">
+            <ItemGroup className="gap-4">
               {runs.map((run) => (
-                <li key={run.id} className="rounded-md border p-4">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <StatusBadge status={run.status} />
-                    <span className="text-sm font-medium">
-                      {formatDateTime(run.startedAt)}
-                    </span>
-                    <span className="text-muted-foreground text-xs">
-                      {run.finishedAt
-                        ? `finished ${formatDateTime(run.finishedAt)}`
-                        : 'still running'}
-                    </span>
-                  </div>
-
-                  {run.summary ? (
-                    <p className="text-muted-foreground mt-2 text-sm">{run.summary}</p>
-                  ) : null}
+                <Item key={run.id} variant="outline" className="flex-col items-stretch">
+                  <ItemContent>
+                    <ItemTitle className="flex-wrap gap-x-3">
+                      <StatusBadge status={run.status} />
+                      <span>{formatDateTime(run.startedAt)}</span>
+                      <span className="text-muted-foreground text-xs font-normal">
+                        {run.finishedAt
+                          ? `finished ${formatDateTime(run.finishedAt)}`
+                          : 'still running'}
+                      </span>
+                    </ItemTitle>
+                    {run.summary ? (
+                      <p className="text-muted-foreground text-sm">{run.summary}</p>
+                    ) : null}
+                  </ItemContent>
 
                   {run.results.length > 0 ? (
-                    <>
-                      <Separator className="my-3" />
-                      <ul className="space-y-2">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>URL</TableHead>
+                          <TableHead className="w-24">Status</TableHead>
+                          <TableHead className="w-20 text-right">Code</TableHead>
+                          <TableHead className="w-24 text-right">Duration</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {run.results.map((result) => (
-                          <li
-                            key={result.id}
-                            className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
-                          >
-                            <StatusBadge status={result.status} />
-                            <span className="min-w-0 flex-1 truncate">{result.url}</span>
-                            <span className="text-muted-foreground tabular-nums">
+                          <TableRow key={result.id}>
+                            <TableCell className="max-w-0">
+                              <span className="block truncate">{result.url}</span>
+                              {result.error ? (
+                                <span className="text-destructive text-xs">
+                                  {result.error}
+                                </span>
+                              ) : null}
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge status={result.status} />
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
                               {result.statusCode ?? '—'}
-                            </span>
-                            <span className="text-muted-foreground tabular-nums">
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
                               {formatDuration(result.durationMs)}
-                            </span>
-                            {result.error ? (
-                              <span className="text-destructive w-full text-xs">
-                                {result.error}
-                              </span>
-                            ) : null}
-                          </li>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </ul>
-                    </>
+                      </TableBody>
+                    </Table>
                   ) : null}
-                </li>
+                </Item>
               ))}
-            </ul>
+            </ItemGroup>
           )}
         </CardContent>
       </Card>

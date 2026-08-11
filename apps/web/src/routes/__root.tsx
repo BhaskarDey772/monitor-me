@@ -59,8 +59,8 @@ function RootLayout() {
           <Link to="/dashboard" className="text-sm [&.active]:font-semibold">
             Dashboard
           </Link>
-          <Link to="/change-password" className="text-sm [&.active]:font-semibold">
-            Password
+          <Link to="/settings" className="text-sm [&.active]:font-semibold">
+            Settings
           </Link>
 
           <div className="ml-auto flex items-center gap-2">

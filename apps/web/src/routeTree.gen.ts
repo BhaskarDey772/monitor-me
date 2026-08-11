@@ -12,8 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthedChangePasswordRouteImport } from './routes/_authed/change-password'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as SubscribeTopicRouteImport } from './routes/subscribe.$topic'
 import { Route as AuthedMonitorsMonitorIdLogRouteImport } from './routes/_authed/monitors.$monitorId.log'
 
@@ -31,14 +31,14 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedChangePasswordRoute = AuthedChangePasswordRouteImport.update({
-  id: '/change-password',
-  path: '/change-password',
-  getParentRoute: () => AuthedRoute,
-} as any)
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthedRoute,
 } as any)
 const SubscribeTopicRoute = SubscribeTopicRouteImport.update({
@@ -56,16 +56,16 @@ const AuthedMonitorsMonitorIdLogRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/change-password': typeof AuthedChangePasswordRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/settings': typeof AuthedSettingsRoute
   '/subscribe/$topic': typeof SubscribeTopicRoute
   '/monitors/$monitorId/log': typeof AuthedMonitorsMonitorIdLogRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/change-password': typeof AuthedChangePasswordRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/settings': typeof AuthedSettingsRoute
   '/subscribe/$topic': typeof SubscribeTopicRoute
   '/monitors/$monitorId/log': typeof AuthedMonitorsMonitorIdLogRoute
 }
@@ -74,8 +74,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authed/change-password': typeof AuthedChangePasswordRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/settings': typeof AuthedSettingsRoute
   '/subscribe/$topic': typeof SubscribeTopicRoute
   '/_authed/monitors/$monitorId/log': typeof AuthedMonitorsMonitorIdLogRoute
 }
@@ -84,16 +84,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
-    | '/change-password'
     | '/dashboard'
+    | '/settings'
     | '/subscribe/$topic'
     | '/monitors/$monitorId/log'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
-    | '/change-password'
     | '/dashboard'
+    | '/settings'
     | '/subscribe/$topic'
     | '/monitors/$monitorId/log'
   id:
@@ -101,8 +101,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_authed'
     | '/login'
-    | '/_authed/change-password'
     | '/_authed/dashboard'
+    | '/_authed/settings'
     | '/subscribe/$topic'
     | '/_authed/monitors/$monitorId/log'
   fileRoutesById: FileRoutesById
@@ -137,18 +137,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/change-password': {
-      id: '/_authed/change-password'
-      path: '/change-password'
-      fullPath: '/change-password'
-      preLoaderRoute: typeof AuthedChangePasswordRouteImport
-      parentRoute: typeof AuthedRoute
-    }
     '/_authed/dashboard': {
       id: '/_authed/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/subscribe/$topic': {
@@ -169,14 +169,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
-  AuthedChangePasswordRoute: typeof AuthedChangePasswordRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedMonitorsMonitorIdLogRoute: typeof AuthedMonitorsMonitorIdLogRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
-  AuthedChangePasswordRoute: AuthedChangePasswordRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedMonitorsMonitorIdLogRoute: AuthedMonitorsMonitorIdLogRoute,
 }
 

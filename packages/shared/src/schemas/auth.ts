@@ -79,6 +79,12 @@ export const changePasswordSchema = z
     path: ["newPassword"],
   });
 
+/** Profile fields a user may change about themselves. */
+export const updateProfileSchema = z.object({
+  name: nameSchema,
+});
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type SignInInput = z.infer<typeof signInSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

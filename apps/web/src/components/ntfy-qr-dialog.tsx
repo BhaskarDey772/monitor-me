@@ -1,5 +1,5 @@
 import type { MonitorDto } from '@monitor-me/shared'
-import { Check, Copy, QrCode } from 'lucide-react'
+import { CheckIcon, CopyIcon, QrCodeIcon } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group'
 
 /**
  * QR code that subscribes a phone to this monitor's ntfy topic.
@@ -42,11 +49,12 @@ export function NtfyQrDialog({ monitor }: { monitor: MonitorDto }) {
       <DialogTrigger asChild>
         <Button
           variant="ghost"
-          className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0"
+          size="icon-sm"
+          className="text-muted-foreground hover:text-foreground"
           aria-label={`Subscribe to alerts for ${monitor.name}`}
           title="Show ntfy subscribe QR code"
         >
-          <QrCode className="size-3.5" />
+          <QrCodeIcon />
         </Button>
       </DialogTrigger>
 
@@ -54,13 +62,13 @@ export function NtfyQrDialog({ monitor }: { monitor: MonitorDto }) {
         <DialogHeader>
           <DialogTitle>Subscribe to alerts</DialogTitle>
           {/* `break-words` because a monitor name can be one long unbroken
-              string, which previously pushed the dialog wider than its box. */}
+              string, which would otherwise push the dialog wider than its box. */}
           <DialogDescription className="break-words">
             Scan to open ntfy and subscribe to “{monitor.name}”.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center gap-4">
           {/* White quiet zone regardless of theme — a dark surround behind a QR
               is the other classic reason scanners fail. */}
           <div className="rounded-lg bg-white p-4">
@@ -73,26 +81,29 @@ export function NtfyQrDialog({ monitor }: { monitor: MonitorDto }) {
             />
           </div>
 
-          <div className="w-full min-w-0 space-y-1">
-            <p className="text-muted-foreground text-xs">Topic</p>
-            <div className="flex min-w-0 items-center gap-2">
-              <code className="bg-muted min-w-0 flex-1 truncate rounded px-2 py-1 text-xs">
-                {monitor.ntfy.topic}
-              </code>
-              <Button
-                size="icon"
-                variant="outline"
-                className="size-7 shrink-0"
-                aria-label="Copy topic"
-                onClick={() => void copyTopic()}
-              >
-                {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-              </Button>
-            </div>
-            <p className="text-muted-foreground text-xs">
+          <Field>
+            <FieldLabel htmlFor={`topic-${monitor.id}`}>Topic</FieldLabel>
+            <InputGroup>
+              <InputGroupInput
+                id={`topic-${monitor.id}`}
+                value={monitor.ntfy.topic}
+                readOnly
+                className="font-mono"
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  size="icon-xs"
+                  aria-label="Copy topic"
+                  onClick={() => void copyTopic()}
+                >
+                  {copied ? <CheckIcon /> : <CopyIcon />}
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+            <FieldDescription>
               Server {monitor.ntfy.host} · on iOS, add this topic manually.
-            </p>
-          </div>
+            </FieldDescription>
+          </Field>
         </div>
       </DialogContent>
     </Dialog>

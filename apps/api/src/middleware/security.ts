@@ -97,6 +97,31 @@ export const authLimiter = rateLimit({
   skip: (req) => req.method === "GET" || req.method === "OPTIONS",
 });
 
+/**
+ * Writes to settings are limited harder than ordinary requests.
+ *
+ * A settings write can carry an OpenRouter key, which the server verifies against
+ * OpenRouter. Without a limit, this endpoint would be a free oracle for testing
+ * stolen keys at our IP's expense.
+ */
+export const settingsWriteLimiter = rateLimit({
+  ...baseLimiter,
+  windowMs: 5 * 60_000,
+  limit: env.isProduction ? 10 : 100,
+  skip: (req) => req.method === "GET" || req.method === "OPTIONS",
+});
+
+/**
+ * Authenticated API responses must not be stored by browsers or proxies. Applied
+ * to every API route so a shared cache can never hand one user's data — or the
+ * masked shape of their credentials — to the next person on the connection.
+ */
+export const noStore: RequestHandler = (_req, res, next) => {
+  res.set("Cache-Control", "no-store, private");
+  res.set("Pragma", "no-cache");
+  next();
+};
+
 /** Paths the tight limiter guards, relative to the auth base path. */
 export const SENSITIVE_AUTH_PATHS = [
   `${AUTH_BASE_PATH}/sign-in`,

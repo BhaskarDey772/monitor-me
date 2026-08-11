@@ -2,6 +2,8 @@ import { parseInput, signInSchema } from '@monitor-me/shared'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { FieldError, isInvalid } from '@/components/field-error'
+import { PasswordInput } from '@/components/password-input'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -11,11 +13,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Spinner } from '@/components/ui/spinner'
 import { signIn } from '@/lib/auth-client'
 import { safeRedirect } from '@/lib/redirect'
-import { FieldError } from '@/components/field-error'
 
 export const Route = createFileRoute('/login')({
   // Search params are untrusted input: normalize before they reach the component.
@@ -30,6 +33,7 @@ function LoginPage() {
   const router = useRouter()
   const { redirect } = Route.useSearch()
   const [errors, setErrors] = useState<Record<string, string[]>>({})
+  const [rememberMe, setRememberMe] = useState(false)
   const [pending, setPending] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -41,7 +45,7 @@ function LoginPage() {
     const parsed = parseInput(signInSchema, {
       email: form.get('email'),
       password: form.get('password'),
-      rememberMe: form.get('rememberMe') === 'on',
+      rememberMe,
     })
 
     if (!parsed.success) {
@@ -71,39 +75,47 @@ function LoginPage() {
       </CardHeader>
 
       <form onSubmit={handleSubmit} noValidate>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-            />
-            <FieldError messages={errors.email} />
-          </div>
+        <CardContent>
+          <FieldGroup>
+            <Field data-invalid={isInvalid(errors.email) || undefined}>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                aria-invalid={isInvalid(errors.email) || undefined}
+                required
+              />
+              <FieldError messages={errors.email} />
+            </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-            />
-            <FieldError messages={errors.password} />
-          </div>
+            <Field data-invalid={isInvalid(errors.password) || undefined}>
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <PasswordInput
+                id="password"
+                name="password"
+                autoComplete="current-password"
+                aria-invalid={isInvalid(errors.password) || undefined}
+                required
+              />
+              <FieldError messages={errors.password} />
+            </Field>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="rememberMe" className="size-4" />
-            Remember me
-          </label>
+            <Field orientation="horizontal">
+              <Checkbox
+                id="rememberMe"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+              />
+              <FieldLabel htmlFor="rememberMe">Remember me</FieldLabel>
+            </Field>
+          </FieldGroup>
         </CardContent>
 
         <CardFooter className="mt-4 flex-col items-stretch gap-3">
           <Button type="submit" disabled={pending}>
+            {pending ? <Spinner data-icon="inline-start" /> : null}
             {pending ? 'Signing in…' : 'Sign in'}
           </Button>
           <p className="text-muted-foreground text-center text-sm">

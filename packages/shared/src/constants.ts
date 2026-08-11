@@ -9,6 +9,8 @@ export const API_ROUTES = {
   monitors: "/api/monitors",
   monitor: (id: string) => `/api/monitors/${id}`,
   monitorRuns: (id: string) => `/api/monitors/${id}/runs`,
+  settings: "/api/settings",
+  openRouterModels: "/api/openrouter/models",
 } as const;
 
 /**
@@ -28,8 +30,11 @@ export const USER_ADDITIONAL_FIELDS = {
   },
 } as const;
 
-/** Where the client sends a user who still has a machine-generated password. */
-export const CHANGE_PASSWORD_PATH = "/change-password";
+/**
+ * Account settings, which is also where a user with a machine-generated password
+ * is sent to rotate it.
+ */
+export const SETTINGS_PATH = "/settings";
 
 /** Password policy enforced identically on client and server. */
 export const PASSWORD_POLICY = {

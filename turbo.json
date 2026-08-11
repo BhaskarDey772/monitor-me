@@ -12,7 +12,10 @@
     "SERVER_URL",
     "CLIENT_URL",
     "VITE_SERVER_URL",
-    "NTFY_SERVER"
+    "NTFY_SERVER",
+    "ENCRYPTION_KEY",
+    "OPENROUTER_API_KEY",
+    "OPENROUTER_MODEL"
   ],
   "tasks": {
     "build": {
